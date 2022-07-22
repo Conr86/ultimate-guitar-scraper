@@ -7,7 +7,8 @@ import (
 	"html/template"
 	"log"
 	"strings"
-
+	"os"
+	"path/filepath"
 	"github.com/Pilfer/ultimate-guitar-scraper/pkg/ultimateguitar"
 
 	"github.com/urfave/cli"
@@ -18,13 +19,18 @@ var templateContent string
 
 var ExportTabHTML = cli.Command{
 	Name:        "export",
-	Usage:       "ug export -id {tabId}",
+	Usage:       "ug export -id {tabId} -out {path}",
 	Description: "Fetch a tab from ultimate-guitar.com by id and print it as HTML",
 	Aliases:     []string{"e"},
 	Flags: []cli.Flag{
 		cli.Int64Flag{
 			Name:  "id",
 			Value: 1086983,
+			Usage: "",
+		},
+		cli.StringFlag{
+			Name:  "out",
+			Value: ".",
 			Usage: "",
 		},
 	},
@@ -63,5 +69,17 @@ func exportTabByID(c *cli.Context) {
 	html = strings.ReplaceAll(html, "[ch]", "<span class=\"chord\">")
 	html = strings.ReplaceAll(html, "[/ch]", "</span>")
 
-	fmt.Println(html)
+    if c.IsSet("out") {
+		filename := fmt.Sprintf("%s - %s (%d).html", tab.ArtistName, tab.SongName, tabID)
+		path := filepath.Join(c.String("out"), filename)
+
+		fmt.Printf("Writing to file: %s\n", path)
+		err := os.WriteFile(path, []byte(html), 0755)
+		if err != nil {
+			fmt.Printf("Unable to write to file: %v", err)
+		}
+	} else {
+		fmt.Println(html)
+	}
+
 }
